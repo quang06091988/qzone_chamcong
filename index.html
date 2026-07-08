@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Q Zone · Chấm công</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f1115;
+    --card:#1a1d24;
+    --card2:#22262f;
+    --line:#2e333e;
+    --text:#f2f3f5;
+    --muted:#9aa1ad;
+    --accent:#ffc24b;
+    --accent-dark:#3a2f14;
+    --success:#3ddc84;
+    --danger:#ff6b6b;
+    --radius:16px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    font-family:'Be Vietnam Pro',system-ui,sans-serif;
+    background:var(--bg);color:var(--text);
+    min-height:100vh;min-height:100dvh;
+    display:flex;flex-direction:column;
+  }
+  .wrap{width:100%;max-width:440px;margin:0 auto;padding:20px 18px 32px;flex:1;display:flex;flex-direction:column}
+
+  /* Header */
+  header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px}
+  .brand{font-size:22px;font-weight:800;letter-spacing:.5px}
+  .brand span{color:var(--accent)}
+  .clock{font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .today{font-size:13px;color:var(--muted);margin-bottom:20px}
+
+  .label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:18px 0 10px}
+
+  /* Chọn tên */
+  select.namebox{
+    width:100%;appearance:none;
+    background:var(--card) url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="%239aa1ad" viewBox="0 0 16 16"><path d="M8 11L2 5h12z"/></svg>') no-repeat right 16px center;
+    border:1px solid var(--line);border-radius:var(--radius);
+    color:var(--text);font:600 17px 'Be Vietnam Pro',sans-serif;
+    padding:15px 44px 15px 16px;
+  }
+  select.namebox:focus{outline:2px solid var(--accent);outline-offset:1px}
+
+  /* Chọn ca */
+  .shifts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .shift{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 6px 12px;text-align:center;cursor:pointer;
+    transition:transform .08s ease, border-color .15s ease, background .15s ease;
+  }
+  .shift:active{transform:scale(.96)}
+  .shift .ico{font-size:22px;display:block;margin-bottom:5px}
+  .shift .nm{font-size:15px;font-weight:600}
+  .shift .tm{font-size:11px;color:var(--muted);margin-top:2px}
+  .shift.on{background:var(--accent-dark);border-color:var(--accent)}
+  .shift.on .nm{color:var(--accent)}
+
+  /* Selfie — signature element */
+  .selfie-zone{display:flex;flex-direction:column;align-items:center;margin-top:6px}
+  .ring{
+    width:190px;height:190px;border-radius:50%;
+    padding:6px;
+    background:conic-gradient(var(--line) 0 100%);
+    transition:background .3s ease;
+    cursor:pointer;position:relative;
+  }
+  .ring.ok{background:conic-gradient(var(--accent) 0 100%)}
+  .ring-inner{
+    width:100%;height:100%;border-radius:50%;overflow:hidden;
+    background:var(--card2);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  }
+  .ring-inner img{width:100%;height:100%;object-fit:cover}
+  .ring-inner .cam{font-size:36px}
+  .ring-inner .hint{font-size:13px;color:var(--muted);font-weight:500}
+  .retake{
+    margin-top:10px;background:none;border:none;color:var(--muted);
+    font:500 13px 'Be Vietnam Pro',sans-serif;cursor:pointer;
+    text-decoration:underline;text-underline-offset:3px;display:none;
+  }
+  .retake.show{display:inline}
+
+  /* Nút chấm */
+  .cta{
+    margin-top:auto;width:100%;
+    background:var(--accent);color:#1a1305;border:none;border-radius:var(--radius);
+    font:800 18px 'Be Vietnam Pro',sans-serif;letter-spacing:.3px;
+    padding:17px;cursor:pointer;
+    transition:opacity .15s ease, transform .08s ease;
+  }
+  .cta:disabled{opacity:.32;cursor:not-allowed}
+  .cta:not(:disabled):active{transform:scale(.98)}
+  .note{font-size:12.5px;color:var(--muted);text-align:center;margin-top:10px;min-height:18px}
+  .note.err{color:var(--danger)}
+
+  /* Màn hình thành công */
+  .done{
+    position:fixed;inset:0;background:var(--bg);
+    display:none;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:32px;z-index:50;
+  }
+  .done.show{display:flex}
+  .done .tick{
+    width:88px;height:88px;border-radius:50%;
+    background:rgba(61,220,132,.12);border:2px solid var(--success);
+    display:flex;align-items:center;justify-content:center;
+    font-size:42px;color:var(--success);margin-bottom:22px;
+    animation:pop .35s cubic-bezier(.2,1.4,.4,1)
+  }
+  @keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+  @media (prefers-reduced-motion:reduce){.done .tick{animation:none}}
+  .done h2{font-size:22px;font-weight:800;margin-bottom:8px}
+  .done p{color:var(--muted);font-size:15px;line-height:1.6}
+  .done p b{color:var(--text)}
+  .done .close{
+    margin-top:30px;background:var(--card);border:1px solid var(--line);
+    color:var(--text);border-radius:12px;padding:12px 28px;
+    font:600 15px 'Be Vietnam Pro',sans-serif;cursor:pointer;
+  }
+
+  /* Loading spinner trong nút */
+  .spin{
+    display:inline-block;width:16px;height:16px;vertical-align:-3px;margin-right:8px;
+    border:2.5px solid rgba(26,19,5,.25);border-top-color:#1a1305;border-radius:50%;
+    animation:rot .7s linear infinite;
+  }
+  @keyframes rot{to{transform:rotate(360deg)}}
+
+  .already{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:10px 14px;font-size:13px;color:var(--muted);margin-bottom:4px;display:none;
+  }
+  .already.show{display:block}
+  .already b{color:var(--success)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">Q <span>ZONE</span></div>
+    <div class="clock" id="clock">--:--</div>
+  </header>
+  <div class="today" id="today"></div>
+
+  <div class="already" id="already"></div>
+
+  <div class="label">Nhân viên</div>
+  <select class="namebox" id="nameSel">
+    <option value="">Đang tải danh sách…</option>
+  </select>
+
+  <div class="label">Ca làm</div>
+  <div class="shifts" id="shifts"></div>
+
+  <div class="label">Ảnh chấm công</div>
+  <div class="selfie-zone">
+    <div class="ring" id="ring" role="button" tabindex="0" aria-label="Chụp ảnh selfie">
+      <div class="ring-inner" id="ringInner">
+        <span class="cam">📷</span>
+        <span class="hint">Bấm để chụp</span>
+      </div>
+    </div>
+    <button class="retake" id="retake">Chụp lại</button>
+    <input type="file" id="camInput" accept="image/*" capture="user" hidden>
+  </div>
+
+  <button class="cta" id="btnSubmit" disabled>Chấm công</button>
+  <div class="note" id="note">Chọn tên, ca và chụp ảnh để chấm công</div>
+</div>
+
+<!-- Màn hình thành công -->
+<div class="done" id="done">
+  <div class="tick">✓</div>
+  <h2>Đã chấm công!</h2>
+  <p id="doneInfo"></p>
+  <button class="close" id="btnClose">Xong</button>
+</div>
+
+<canvas id="cv" hidden></canvas>
+
+<script>
+/* ================== CẤU HÌNH ================== */
+const CONFIG = {
+  // URL CSV tab "NhanVien" (Google Sheet đã publish) — thay GID_NHANVIEN
+  NHANVIEN_CSV: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS74gW_qpFuYMyCvPZkELrZpPB-mkrXf13ekJzF5_wspmmaH3pNeELlteTwdktU0dqxJa71n0kH5Axn/pub?gid=1158146117&single=true&output=csv',
+  // URL Web App của Google Apps Script (sau khi Deploy) — thay ở đây
+  SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzm5nTGZWIQr3hmGD0SOm47D1WpTue4upGgFnI2z0X4P9zpqdsFsq9JaKzABPBWw15H/exec',
+  // Định nghĩa ca: gợi ý tự động theo giờ hiện tại
+  SHIFTS: [
+    { id:'Sáng',  ico:'🌤️', time:'trước 12h', from:0,  to:12 },
+    { id:'Chiều', ico:'☀️',  time:'12h – 17h', from:12, to:17 },
+    { id:'Tối',   ico:'🌙', time:'sau 17h',   from:17, to:24 },
+  ],
+  MAX_PHOTO_PX: 640,   // resize ảnh trước khi gửi
+  JPEG_QUALITY: 0.72,
+};
+/* ============================================== */
+
+const $ = id => document.getElementById(id);
+let state = { name:'', ca:'', photo:'' };
+
+/* Đồng hồ + ngày */
+const DOW = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
+function tick(){
+  const n = new Date();
+  $('clock').textContent = String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+  $('today').textContent = DOW[n.getDay()]+', '+n.getDate()+'/'+(n.getMonth()+1)+'/'+n.getFullYear();
+}
+tick(); setInterval(tick, 15000);
+
+function todayKey(){
+  const n = new Date();
+  return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
+}
+
+/* Parse CSV đơn giản (hỗ trợ dấu ngoặc kép) */
+function parseCSV(text){
+  const rows=[]; let row=[], cell='', q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){cell+='"';i++;} else q=false; } else cell+=c; }
+    else if(c==='"') q=true;
+    else if(c===','){ row.push(cell); cell=''; }
+    else if(c==='\n'){ row.push(cell); rows.push(row); row=[]; cell=''; }
+    else if(c!=='\r') cell+=c;
+  }
+  if(cell||row.length){ row.push(cell); rows.push(row); }
+  return rows;
+}
+
+/* Tải danh sách nhân viên: cột A = Tên, cột B = Nghỉ (x = ẩn) */
+async function loadStaff(){
+  try{
+    const res = await fetch(CONFIG.NHANVIEN_CSV + '&t=' + Date.now());
+    const rows = parseCSV(await res.text()).slice(1);
+    const names = rows.filter(r => r[0] && String(r[1]||'').trim().toLowerCase() !== 'x').map(r => r[0].trim());
+    const sel = $('nameSel');
+    sel.innerHTML = '<option value="">— Chọn tên của bạn —</option>' +
+      names.map(n => `<option value="${n}">${n}</option>`).join('');
+    const saved = localStorage.getItem('qz_cc_name');
+    if(saved && names.includes(saved)){ sel.value = saved; state.name = saved; }
+    refresh();
+  }catch(e){
+    $('nameSel').innerHTML = '<option value="">Lỗi tải danh sách — kéo xuống thử lại</option>';
+  }
+}
+
+/* Vẽ ô ca + gợi ý ca theo giờ */
+function renderShifts(){
+  const h = new Date().getHours();
+  const wrap = $('shifts');
+  wrap.innerHTML = '';
+  CONFIG.SHIFTS.forEach(s => {
+    const d = document.createElement('div');
+    d.className = 'shift';
+    d.innerHTML = `<span class="ico">${s.ico}</span><div class="nm">${s.id}</div><div class="tm">${s.time}</div>`;
+    d.onclick = () => { state.ca = s.id; [...wrap.children].forEach(c=>c.classList.remove('on')); d.classList.add('on'); refresh(); };
+    if(h >= s.from && h < s.to){ d.classList.add('on'); state.ca = s.id; }
+    wrap.appendChild(d);
+  });
+}
+
+/* Selfie: mở camera trước, nén ảnh bằng canvas */
+$('ring').onclick = () => $('camInput').click();
+$('ring').onkeydown = e => { if(e.key==='Enter'||e.key===' ') $('camInput').click(); };
+$('retake').onclick = () => $('camInput').click();
+
+$('camInput').onchange = e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const img = new Image();
+  img.onload = () => {
+    const cv = $('cv'), max = CONFIG.MAX_PHOTO_PX;
+    const scale = Math.min(1, max / Math.max(img.width, img.height));
+    cv.width = Math.round(img.width * scale);
+    cv.height = Math.round(img.height * scale);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    state.photo = cv.toDataURL('image/jpeg', CONFIG.JPEG_QUALITY);
+    $('ringInner').innerHTML = `<img src="${state.photo}" alt="Ảnh selfie">`;
+    $('ring').classList.add('ok');
+    $('retake').classList.add('show');
+    URL.revokeObjectURL(img.src);
+    refresh();
+  };
+  img.src = URL.createObjectURL(f);
+  e.target.value = '';
+};
+
+$('nameSel').onchange = e => {
+  state.name = e.target.value;
+  if(state.name) localStorage.setItem('qz_cc_name', state.name);
+  refresh();
+};
+
+/* Kiểm tra đã chấm ca này hôm nay chưa (localStorage) */
+function alreadyKey(){ return todayKey()+'|'+state.name+'|'+state.ca; }
+function checkAlready(){
+  const log = JSON.parse(localStorage.getItem('qz_cc_log')||'[]');
+  const hit = log.find(x => x.k === alreadyKey());
+  const box = $('already');
+  if(hit && state.name){
+    box.innerHTML = `<b>✓</b> ${state.name} đã chấm ca <b>${state.ca}</b> hôm nay lúc <b>${hit.t}</b>`;
+    box.classList.add('show');
+    return true;
+  }
+  box.classList.remove('show');
+  return false;
+}
+
+function refresh(){
+  const dup = checkAlready();
+  const ready = state.name && state.ca && state.photo && !dup;
+  $('btnSubmit').disabled = !ready;
+  const note = $('note');
+  note.classList.remove('err');
+  if(dup) note.textContent = 'Ca này đã được chấm rồi';
+  else if(!state.name) note.textContent = 'Chọn tên của bạn';
+  else if(!state.photo) note.textContent = 'Chụp ảnh selfie để hoàn tất';
+  else note.textContent = 'Sẵn sàng — bấm Chấm công';
+}
+
+/* Lấy vị trí GPS hiện tại */
+function getGPS(){
+  return new Promise((resolve, reject) => {
+    if(!navigator.geolocation) return reject(new Error('Máy không hỗ trợ định vị'));
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve(pos.coords),
+      err => reject(new Error(
+        err.code === 1 ? 'Chưa cấp quyền định vị — bật Vị trí cho trình duyệt rồi thử lại'
+                       : 'Không lấy được định vị — ra chỗ thoáng rồi thử lại'
+      )),
+      { enableHighAccuracy:true, timeout:12000, maximumAge:30000 }
+    );
+  });
+}
+
+/* Gửi lên Apps Script: định vị -> gửi -> server tự tính giờ + khoảng cách */
+$('btnSubmit').onclick = async () => {
+  const btn = $('btnSubmit');
+  btn.disabled = true;
+  try{
+    btn.innerHTML = '<span class="spin"></span>Đang định vị…';
+    const gps = await getGPS();
+
+    btn.innerHTML = '<span class="spin"></span>Đang gửi…';
+    const payload = {
+      name: state.name,
+      ca: state.ca,
+      photo: state.photo,
+      lat: gps.latitude,
+      lng: gps.longitude,
+      accuracy: Math.round(gps.accuracy || 0),
+    };
+    const res = await fetch(CONFIG.SCRIPT_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'}, // tránh CORS preflight với Apps Script
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.msg || 'Lỗi không xác định');
+
+    // Lưu log local để chặn chấm trùng (theo giờ server trả về)
+    const log = JSON.parse(localStorage.getItem('qz_cc_log')||'[]');
+    log.push({ k: alreadyKey(), t: data.time });
+    localStorage.setItem('qz_cc_log', JSON.stringify(log.slice(-60)));
+
+    const distTxt = (data.dist !== '' && data.dist != null) ? `<br>cách quán <b>${data.dist}m</b>` : '';
+    $('doneInfo').innerHTML = `<b>${payload.name}</b> · Ca <b>${payload.ca}</b><br>lúc <b>${data.time}</b> ngày ${data.date}${distTxt}`;
+    $('done').classList.add('show');
+  }catch(err){
+    const note = $('note');
+    note.textContent = '⚠ ' + (err.message === 'Failed to fetch' ? 'Không kết nối được — kiểm tra mạng' : err.message);
+    note.classList.add('err');
+    btn.disabled = false;
+    btn.innerHTML = 'Chấm công';
+    return; // dừng ở đây để giữ thông báo lỗi, không cho refresh() ghi đè
+  }
+  btn.innerHTML = 'Chấm công';
+  refresh();
+};
+
+$('btnClose').onclick = () => {
+  $('done').classList.remove('show');
+  state.photo = '';
+  $('ringInner').innerHTML = '<span class="cam">📷</span><span class="hint">Bấm để chụp</span>';
+  $('ring').classList.remove('ok');
+  $('retake').classList.remove('show');
+  refresh();
+};
+
+renderShifts();
+loadStaff();
+refresh();
+</script>
+</body>
+</html>
